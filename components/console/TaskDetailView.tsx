@@ -140,9 +140,9 @@ export default function TaskDetailView({ task, onClose, onUpdate, onEdit }: Task
                                     <div 
                                         key={idx} 
                                         className="aspect-square border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 cursor-pointer overflow-hidden group relative"
-                                        onClick={() => setPreviewImage({ url: file.url, name: file.name })}
+                                        onClick={() => setPreviewImage({ url: file.url, name: file.fileName || file.name })}
                                     >
-                                        <img src={file.url} alt={file.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                        <img src={file.url} alt={file.fileName || file.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             <PlayCircle className="w-6 h-6 text-white" />
                                         </div>
