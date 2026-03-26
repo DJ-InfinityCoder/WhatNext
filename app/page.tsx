@@ -1,65 +1,73 @@
-import Image from "next/image";
+import { SignedIn, SignedOut, SignInButton } from '@clerk/nextjs'
+import Link from 'next/link'
+import { PWAFeatures } from '@/components/pwa-features'
 
-export default function Home() {
+export default function Page() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-black text-zinc-300 font-sans selection:bg-white selection:text-black">
+      {/* Background Grid Pattern - Very subtle, technical */}
+      <div className="fixed inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#222 1px, transparent 1px)', backgroundSize: '24px 24px', opacity: 0.3 }}></div>
+
+      <nav className="fixed top-0 w-full z-50 border-b border-zinc-900 bg-black/80 backdrop-blur-md">
+        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="text-white font-black tracking-tighter text-xl">WN__</div>
+          <div className="flex items-center gap-6 text-xs font-bold tracking-widest uppercase">
+            <SignedIn>
+              <Link href="/console" className="hover:text-white transition-colors">Console</Link>
+            </SignedIn>
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button className="hover:text-white transition-colors">Authenticate</button>
+              </SignInButton>
+            </SignedOut>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </nav>
+
+      <main className="relative z-10 pt-32 pb-24 container mx-auto px-6 w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start">
+          <div className="lg:col-span-7">
+            <div className="mb-8 inline-flex items-center gap-3 px-3 py-1 border border-zinc-800 bg-zinc-950 text-[10px] font-mono tracking-widest text-zinc-500 uppercase">
+              <span className="w-1.5 h-1.5 bg-zinc-500"></span>
+              Production-Grade Environment
+            </div>
+
+            <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tighter text-white uppercase leading-[0.9] mb-8" style={{ wordSpacing: '-0.1em' }}>
+              Absolute <br /> Task Control.
+            </h1>
+
+            <p className="text-lg sm:text-2xl font-light text-zinc-400 max-w-2xl leading-relaxed tracking-wide mb-12 border-l border-zinc-800 pl-6">
+              A brutalist execution environment for task reminders and management. Built for maximum efficiency, zero distraction, and uncompromising performance.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <SignedIn>
+                <Link href="/console" className="px-8 py-5 bg-white text-black text-sm font-bold tracking-[0.2em] uppercase hover:bg-zinc-200 transition-colors text-center">
+                  Access Console
+                </Link>
+              </SignedIn>
+              <SignedOut>
+                <SignInButton mode="modal" forceRedirectUrl="/console" signUpFallbackRedirectUrl="/console">
+                  <button className="px-8 py-5 bg-white text-black text-sm font-bold tracking-[0.2em] uppercase hover:bg-zinc-200 transition-colors">
+                    Initialize Session
+                  </button>
+                </SignInButton>
+              </SignedOut>
+            </div>
+          </div>
+
+          <div className="lg:col-span-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6 lg:ml-auto w-full">
+            <PWAFeatures />
+          </div>
         </div>
       </main>
+
+      <footer className="border-t border-zinc-900 bg-black py-8 mt-12">
+        <div className="container mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-mono tracking-widest text-zinc-600 uppercase">
+          <div>WHATNEXT // SYS_VER_0.1.0</div>
+          <div>POWERED BY NEXT.JS</div>
+        </div>
+      </footer>
     </div>
-  );
+  )
 }
