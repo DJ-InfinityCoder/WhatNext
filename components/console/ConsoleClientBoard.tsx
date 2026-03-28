@@ -4,8 +4,9 @@ import { useState, useCallback, useEffect } from 'react';
 import TaskList from './TaskList';
 import TaskForm from './TaskForm';
 import TaskDetailView from './TaskDetailView';
-import { getTasks } from '@/lib/actions/task.actions';
-import { Plus, Search, Filter } from 'lucide-react';
+import SearchModal from './SearchModal';
+import { getTasks, getTaskById } from '@/lib/actions/task.actions';
+import { Plus, Search, Filter, Command } from 'lucide-react';
 
 export default function ConsoleClientBoard({
     workspaceId,
@@ -27,10 +28,9 @@ export default function ConsoleClientBoard({
     const [editingTask, setEditingTask] = useState<any | null>(null);
     const [selectedTask, setSelectedTask] = useState<any | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-    // Search & Filter State
-    const [searchQuery, setSearchQuery] = useState('');
-    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+    // Filter State (no more local search)
     const [showFilters, setShowFilters] = useState(false);
     const [filterStatus, setFilterStatus] = useState('');
     const [filterPriority, setFilterPriority] = useState('');
@@ -39,20 +39,23 @@ export default function ConsoleClientBoard({
         setTasks(initialTasks);
     }, [initialTasks]);
 
+    // Cmd/Ctrl+K to open search
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearchQuery(searchQuery);
-        }, 400);
-        return () => clearTimeout(timer);
-    }, [searchQuery]);
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                setIsSearchOpen(true);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     const fetchTasks = useCallback(async () => {
         setIsRefreshing(true);
         try {
-            // Apply a projectId/listId filter if the board is mounted in a specific View
             const filters: any = {};
             if (smartView) filters.view = smartView;
-            if (debouncedSearchQuery.trim()) filters.searchQuery = debouncedSearchQuery.trim();
             if (filterStatus) filters.status = filterStatus;
             if (filterPriority) filters.priority = filterPriority;
 
@@ -63,9 +66,23 @@ export default function ConsoleClientBoard({
         } finally {
             setIsRefreshing(false);
         }
-    }, [workspaceId, smartView, debouncedSearchQuery, filterStatus, filterPriority]);
+    }, [workspaceId, smartView, filterStatus, filterPriority]);
 
-    // Added separate useEffect to trigger fetchTasks when filters or debounced query changes
+    // Re-fetch selected task by ID to keep detail view fresh (comments, status, etc.)
+    const refreshSelectedTask = useCallback(async (taskId: string) => {
+        try {
+            const fresh = await getTaskById(taskId);
+            setSelectedTask(fresh);
+        } catch (e: any) {
+            // If task is not found (deleted) or access denied, clear selection gracefully
+            if (e.message?.includes('Task not found')) {
+                setSelectedTask(null);
+            } else {
+                console.error('Failed to refresh selected task:', e);
+            }
+        }
+    }, []);
+
     useEffect(() => {
         fetchTasks();
     }, [fetchTasks]);
@@ -91,17 +108,17 @@ export default function ConsoleClientBoard({
                 </h1>
 
                 <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-                    {/* Search Input */}
-                    <div className="relative flex items-center flex-1 md:flex-initial">
-                        <Search className="w-3.5 h-3.5 text-zinc-600 absolute left-3" />
-                        <input
-                            type="text"
-                            placeholder="SEARCH..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 pl-9 pr-3 py-2 md:py-1.5 text-[10px] md:text-xs text-black dark:text-white placeholder-zinc-400 dark:placeholder-zinc-700 font-mono focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-500 uppercase w-full md:w-32 transition-all focus:md:w-64"
-                        />
-                    </div>
+                    {/* Global Search Trigger */}
+                    <button
+                        onClick={() => setIsSearchOpen(true)}
+                        className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 px-3 py-1.5 text-zinc-400 dark:text-zinc-600 hover:text-black dark:hover:text-white hover:border-zinc-400 dark:hover:border-zinc-500 transition-all cursor-pointer group flex-1 md:flex-initial md:min-w-[200px]"
+                    >
+                        <Search className="w-3.5 h-3.5 shrink-0" />
+                        <span className="text-[10px] md:text-xs font-mono uppercase tracking-wider flex-1 text-left">Search...</span>
+                        <kbd className="hidden md:flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-mono font-bold text-zinc-400 dark:text-zinc-600 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 group-hover:border-zinc-300 dark:group-hover:border-zinc-700 transition-colors">
+                            <Command className="w-2.5 h-2.5" />K
+                        </kbd>
+                    </button>
 
                     {/* Filter Dropdown Toggle */}
                     <div className="relative">
@@ -189,13 +206,22 @@ export default function ConsoleClientBoard({
                 <TaskDetailView 
                     task={selectedTask}
                     onClose={() => setSelectedTask(null)}
-                    onUpdate={fetchTasks}
+                    onUpdate={() => {
+                        fetchTasks();
+                        if (selectedTask?._id) refreshSelectedTask(selectedTask._id);
+                    }}
                     onEdit={(task) => {
                         setSelectedTask(null);
                         setEditingTask(task);
                     }}
                 />
             )}
+
+            {/* Global Search Modal */}
+            <SearchModal 
+                isOpen={isSearchOpen} 
+                onClose={() => setIsSearchOpen(false)} 
+            />
         </main>
     );
 }

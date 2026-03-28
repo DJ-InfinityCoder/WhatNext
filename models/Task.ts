@@ -9,9 +9,21 @@ export interface IAttachment {
     uploadedAt: Date;
 }
 
+export interface IComment {
+    _id?: mongoose.Types.ObjectId;
+    text: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface ICompletionNote {
+    note: string;
+    committedAt: Date;
+}
+
 export interface ITask extends Document {
     title: string;
-    description?: string; // Rich text support usually implies storing HTML/Markdown strings
+    description?: string;
     dueDate?: Date;
     priority: 'low' | 'medium' | 'high' | 'urgent';
     status: 'pending' | 'in-progress' | 'completed' | 'archived';
@@ -19,11 +31,14 @@ export interface ITask extends Document {
 
     // Relationships
     workspaceId: mongoose.Types.ObjectId;
-    userId: string; // From auth
+    userId: string;
 
     // Tracking & States
     completedAt?: Date;
 
+    // Progress tracking
+    comments: IComment[];
+    completionNote?: ICompletionNote;
 
     attachments: IAttachment[];
     createdAt: Date;
@@ -39,10 +54,26 @@ const AttachmentSchema = new Schema<IAttachment>({
     uploadedAt: { type: Date, default: Date.now },
 });
 
+const CommentSchema = new Schema<IComment>(
+    {
+        text: { type: String, required: true },
+        createdAt: { type: Date, default: Date.now },
+        updatedAt: { type: Date, default: Date.now },
+    },
+    {
+        timestamps: true,
+    }
+);
+
+const CompletionNoteSchema = new Schema<ICompletionNote>({
+    note: { type: String, required: true },
+    committedAt: { type: Date, default: Date.now },
+});
+
 const TaskSchema = new Schema<ITask>(
     {
         title: { type: String, required: true },
-        description: { type: String }, // Can store rich text HTML or Markdown string
+        description: { type: String },
         dueDate: { type: Date },
         priority: {
             type: String,
@@ -56,13 +87,14 @@ const TaskSchema = new Schema<ITask>(
         },
         estimatedMinutes: { type: Number },
 
-
         workspaceId: { type: Schema.Types.ObjectId, ref: 'Workspace', required: true, index: true },
         userId: { type: String, required: true, index: true },
 
-
         completedAt: { type: Date },
 
+        // Progress tracking
+        comments: { type: [CommentSchema], default: [] },
+        completionNote: { type: CompletionNoteSchema },
 
         attachments: [AttachmentSchema],
     },

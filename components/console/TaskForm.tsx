@@ -64,6 +64,7 @@ export default function TaskForm({ workspaceId, workspaces, initialData, onSucce
             };
 
             payload.attachments = attachments;
+            console.log("SUBMITTING TASK PAYLOAD:", payload);
 
             if (isEditing) {
                 await updateTask(initialData._id, payload);
@@ -190,7 +191,7 @@ export default function TaskForm({ workspaceId, workspaces, initialData, onSucce
                                 <Building2 className="w-3 h-3" /> Target Sector
                             </label>
                             <div className="relative">
-                                <select 
+                                <select
                                     value={selectedWorkspaceId}
                                     onChange={(e) => setSelectedWorkspaceId(e.target.value)}
                                     className="w-full appearance-none bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 px-4 py-2.5 text-xs text-black dark:text-white font-bold tracking-widest uppercase focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-500 cursor-pointer transition-colors"
