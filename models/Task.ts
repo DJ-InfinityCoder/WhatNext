@@ -27,7 +27,6 @@ export interface ITask extends Document {
     dueDate?: Date;
     priority: 'low' | 'medium' | 'high' | 'urgent';
     status: 'pending' | 'in-progress' | 'completed' | 'archived';
-    estimatedMinutes?: number;
 
     // Relationships
     workspaceId: mongoose.Types.ObjectId;
@@ -85,7 +84,7 @@ const TaskSchema = new Schema<ITask>(
             enum: ['pending', 'in-progress', 'completed', 'archived'],
             default: 'pending',
         },
-        estimatedMinutes: { type: Number },
+
 
         workspaceId: { type: Schema.Types.ObjectId, ref: 'Workspace', required: true, index: true },
         userId: { type: String, required: true, index: true },
