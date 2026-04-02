@@ -1,32 +1,11 @@
-const CACHE_NAME = 'whatnext-v1';
-const ASSETS_TO_CACHE = [
-    '/console',
-    '/manifest.json',
-    '/icon-192x192.png',
-    '/icon-512x512.png',
-    '/globals.css'
-];
-
 self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(ASSETS_TO_CACHE);
-        })
-    );
+    self.skipWaiting();
+    console.log('SW: Install Event Triggered');
 });
 
 self.addEventListener('activate', (event) => {
-    event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        })
-    );
+    console.log('SW: Activate Event Triggered');
+    event.waitUntil(self.clients.claim());
 });
 
 self.addEventListener('fetch', (event) => {
@@ -57,5 +36,23 @@ self.addEventListener('push', function (event) {
 self.addEventListener('notificationclick', function (event) {
     console.log('Notification click received.')
     event.notification.close()
-    event.waitUntil(clients.openWindow('/'))
+
+    // 1. Get the URL from the notification data, or default to root
+    const urlToOpen = event.notification.data?.url || '/console'
+
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true })
+            .then(windowClients => {
+                // 2. If a window is already open, focus it and redirect
+                for (let client of windowClients) {
+                    if (client.url.includes(new URL('/', self.location.origin).href) && 'focus' in client) {
+                        return client.focus().then(c => c.navigate(urlToOpen));
+                    }
+                }
+                // 3. Otherwise, open a new window
+                if (clients.openWindow) {
+                    return clients.openWindow(urlToOpen);
+                }
+            })
+    )
 })

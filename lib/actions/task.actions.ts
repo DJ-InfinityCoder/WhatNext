@@ -25,6 +25,11 @@ export async function createTask(data: any) {
 
         const newTask = await Task.create(taskData);
 
+        // --- SCHEDULING REMINDERS ---
+        if (newTask.dueDate) {
+            await syncTaskReminders(newTask._id.toString(), userId, newTask.dueDate);
+        }
+
         return JSON.parse(JSON.stringify(newTask));
     } catch (error: any) {
         console.error("Error creating task:", error);
@@ -160,8 +165,13 @@ export async function searchTasksGlobal(query: string) {
 // --- UPDATE ---
 export async function updateTask(taskId: string, updateData: any) {
     try {
-        const { userId } = await auth();
-        if (!userId) throw new Error("Unauthorized");
+        const authData = await auth();
+        const userId = authData.userId;
+        
+        if (!userId) {
+            console.error("SERVER AUTH FAILED: userId is null in updateTask.");
+            throw new Error("Unauthorized");
+        }
 
         await dbConnect();
 
@@ -191,6 +201,11 @@ export async function updateTask(taskId: string, updateData: any) {
         );
 
         if (!updatedTask) throw new Error("Task not found");
+
+        // --- SYNC REMINDERS ---
+        if (updateData.dueDate !== undefined) {
+             await syncTaskReminders(taskId, userId, updatedTask.dueDate);
+        }
 
         return JSON.parse(JSON.stringify(updatedTask));
     } catch (error: any) {
@@ -463,5 +478,53 @@ export async function bulkUpdateTasks(taskIds: string[], updateData: any) {
     } catch (error: any) {
         console.error("Error running bulk update:", error);
         throw new Error("Failed to bulk update tasks");
+    }
+}
+/**
+ * --- REMINDER SYNC HELPER ---
+ * Schedules/Updates the standard sequence of reminders for a task.
+ */
+async function syncTaskReminders(taskId: string, userId: string, dueDate: Date | null) {
+    try {
+        // 1. Clear existing pending reminders for this task
+        await Reminder.deleteMany({ taskId: new mongoose.Types.ObjectId(taskId), status: 'pending' });
+
+        if (!dueDate) return;
+
+        const remindersToCreate = [];
+        const now = new Date();
+
+        // Standard offsets (in minutes)
+        const offsets = [
+            { label: 'At due time', mins: 0, type: 'at-due' as const },
+            { label: '15 minutes before', mins: 15, type: 'before-due' as const },
+            { label: '1 hour before', mins: 60, type: 'before-due' as const },
+            { label: '1 day before', mins: 1440, type: 'before-due' as const },
+        ];
+
+        for (const offset of offsets) {
+            const remindAt = new Date(dueDate.getTime() - offset.mins * 60000);
+
+            // Only create if the reminder time is in the future
+            if (remindAt > now) {
+                remindersToCreate.push({
+                    taskId: new mongoose.Types.ObjectId(taskId),
+                    userId,
+                    remindAt,
+                    triggerType: offset.type,
+                    offsetMinutes: offset.mins,
+                    status: 'pending',
+                    type: 'browser_push',
+                    message: offset.label
+                });
+            }
+        }
+
+        if (remindersToCreate.length > 0) {
+            await Reminder.insertMany(remindersToCreate);
+        }
+
+    } catch (error) {
+        console.error("Error syncing task reminders:", error);
     }
 }

@@ -19,6 +19,7 @@ const taskSchema = z.object({
     description: z.string().optional(),
     priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
     dueDate: z.string().optional(),
+    dueTime: z.string().optional(),
 });
 
 type TaskFormData = z.infer<typeof taskSchema>;
@@ -47,6 +48,7 @@ export default function TaskForm({ workspaceId, workspaces, initialData, onSucce
             description: initialData?.description || '',
             priority: initialData?.priority || 'medium',
             dueDate: initialData?.dueDate ? new Date(initialData.dueDate).toISOString().split('T')[0] : '',
+            dueTime: initialData?.dueDate ? new Date(initialData.dueDate).toTimeString().slice(0, 5) : '12:00',
         }
     });
 
@@ -60,8 +62,15 @@ export default function TaskForm({ workspaceId, workspaces, initialData, onSucce
                 priority: data.priority,
                 workspaceId: selectedWorkspaceId,
                 ...(data.description ? { description: data.description } : { description: '' }),
-                ...(data.dueDate ? { dueDate: data.dueDate } : { dueDate: null }),
             };
+ 
+            if (data.dueDate) {
+                // Combine Date and Time
+                const time = data.dueTime || '00:00';
+                payload.dueDate = new Date(`${data.dueDate}T${time}:00`);
+            } else {
+                payload.dueDate = null;
+            }
 
             payload.attachments = attachments;
             console.log("SUBMITTING TASK PAYLOAD:", payload);
@@ -205,16 +214,26 @@ export default function TaskForm({ workspaceId, workspaces, initialData, onSucce
                         </div>
                     )}
 
-                    {/* Due Date */}
-                    <div className="flex flex-col gap-2">
+                    {/* Deadline (Date & Time) */}
+                    <div className="flex flex-col gap-2 sm:col-span-2">
                         <label className="text-[10px] text-zinc-500 dark:text-zinc-600 font-bold uppercase tracking-widest flex items-center gap-2">
-                            <Calendar className="w-3 h-3" /> Deadline
+                            <Calendar className="w-3 h-3" /> Target Deadline
                         </label>
-                        <input
-                            type="date"
-                            {...register('dueDate')}
-                            className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 px-4 py-2 text-xs text-black dark:text-white font-mono uppercase focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-500 transition-colors"
-                        />
+                        <div className="flex gap-2">
+                            <input
+                                type="date"
+                                {...register('dueDate')}
+                                className="flex-1 bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 px-4 py-2 text-xs text-black dark:text-white font-mono uppercase focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-500 transition-colors"
+                            />
+                            <div className="relative w-24 sm:w-32">
+                                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-400 pointer-events-none" />
+                                <input
+                                    type="time"
+                                    {...register('dueTime')}
+                                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 pl-8 pr-3 py-2 text-xs text-black dark:text-white font-mono uppercase focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-500 transition-colors"
+                                />
+                            </div>
+                        </div>
                     </div>
 
                 </div>

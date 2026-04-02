@@ -91,7 +91,7 @@ export default function TaskList({ tasks, isGlobalView, activeView, onTaskClick 
                                     {task.dueDate && (
                                         <span className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${isCompleted ? 'text-zinc-400' : 'text-zinc-500'}`}>
                                             <Calendar className="w-3 h-3" />
-                                            <span className="hidden sm:inline">{format(new Date(task.dueDate), 'MMM dd')}</span>
+                                            <span className="hidden sm:inline">{format(new Date(task.dueDate), 'MMM dd · h:mm a')}</span>
                                         </span>
                                     )}
                                     

@@ -215,7 +215,7 @@ export default function TaskDetailView({ task: initialTask, onClose, onUpdate, o
                             <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest block mb-1">Target Date</span>
                             <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-black dark:text-white">
                                 <Calendar className="w-3.5 h-3.5" />
-                                {task.dueDate ? format(new Date(task.dueDate), 'MMM dd, yyyy') : 'No Deadline'}
+                                {task.dueDate ? format(new Date(task.dueDate), 'MMM dd, yyyy · h:mm a') : 'No Deadline'}
                             </div>
                         </div>
                         <div className="p-3 border border-zinc-200 dark:border-zinc-900 bg-zinc-50 dark:bg-zinc-950/50">
@@ -304,7 +304,7 @@ export default function TaskDetailView({ task: initialTask, onClose, onUpdate, o
                                             </p>
                                             <div className="flex items-center justify-between mt-1.5">
                                                 <span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-600">
-                                                    {comment.createdAt ? format(new Date(comment.createdAt), 'dd MMM yyyy · HH:mm') : '—'}
+                                                    {comment.createdAt ? format(new Date(comment.createdAt), 'dd MMM yyyy · h:mm a') : '—'}
                                                 </span>
                                                 <button
                                                     onClick={() => handleDeleteComment(comment._id)}

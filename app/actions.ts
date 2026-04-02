@@ -1,5 +1,6 @@
 'use server'
 
+import { savePushSubscription, removePushSubscription } from "@/lib/actions/notification.actions";
 import webpush from 'web-push'
 
 webpush.setVapidDetails(
@@ -8,21 +9,26 @@ webpush.setVapidDetails(
     process.env.VAPID_PRIVATE_KEY!
 )
 
-let subscription: webpush.PushSubscription | null = null
-
-export async function subscribeUser(sub: webpush.PushSubscription) {
-    subscription = sub
-    // In a production environment, store the subscription in a database
-    return { success: true }
+/**
+ * Persists the browser push subscription to MongoDB for the current user.
+ */
+export async function subscribeUser(sub: any) {
+    return await savePushSubscription(sub);
 }
 
-export async function unsubscribeUser() {
-    subscription = null
-    // In a production environment, remove the subscription from the database
-    return { success: true }
+/**
+ * Removes a specific browser push subscription from the database.
+ */
+export async function unsubscribeUser(endpoint: string) {
+    return await removePushSubscription(endpoint);
 }
 
-export async function sendNotification(message: string) {
+/**
+ * --- TEST ACTION ---
+ * Sends a direct test notification to the current user's session (transient).
+ * In production, use the background worker for scheduled reminders.
+ */
+export async function sendNotification(message: string, subscription: any) {
     if (!subscription) {
         throw new Error('No subscription available')
     }
@@ -31,7 +37,7 @@ export async function sendNotification(message: string) {
         await webpush.sendNotification(
             subscription,
             JSON.stringify({
-                title: 'WhatNext',
+                title: 'WhatNext Test',
                 body: message,
                 icon: '/icon-192x192.png',
             })
